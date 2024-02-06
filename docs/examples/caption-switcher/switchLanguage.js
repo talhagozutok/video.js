@@ -1,31 +1,30 @@
-const xpathEnglish = "//li[contains(@class, 'vjs-captions-menu-item') and contains(., 'English')]";
-const xpathSwedish = "//li[contains(@class, 'vjs-captions-menu-item') and contains(., 'Swedish')]";
-var englishButton;
-var swedishButton;
-
 window.addEventListener("load", () => {
-  englishButton = getElementByXpath(xpathEnglish);
-  swedishButton = getElementByXpath(xpathSwedish);
+  var player = videojs.getAllPlayers()[0];
 
-  document.addEventListener("keydown", function (event) {
-    // if "c" is pressed
-    if (event.key === "c") {
-      // if both button is found
-      if (englishButton && swedishButton) {
-        if (englishButton.classList.contains("vjs-selected")) {
-          swedishButton.click();
-        } else {
-          englishButton.click();
-        }
-        // unfocus clicked buttons
-        document.activeElement.blur();
-      } else {
-        console.error("One or both buttons not found.");
-      }
+  player.ready(function () {
+    tracks = player.textTracks().tracks_;
+    englishTrack = tracks.filter((track) => track.kind == "captions" && track.language == "en")[0];
+    swedishTrack = tracks.filter((track) => track.kind == "captions" && track.language == "sv")[0];
+
+    if (!englishTrack || !swedishTrack) {
+      console.error("One or both tracks not found.");
+      return;
     }
+
+    document.addEventListener("keydown", (event) => {
+      // if "c" is pressed on keyboard
+      if (event.key == "c") {
+        // if current language is english
+        if (englishTrack.mode == "showing") {
+          // switch to swedish language
+          englishTrack.mode = "hidden";
+          swedishTrack.mode = "showing";
+        } else {
+          // switch to english language
+          swedishTrack.mode = "hidden";
+          englishTrack.mode = "showing";
+        }
+      }
+    });
   });
 });
-
-function getElementByXpath(path) {
-  return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-}
